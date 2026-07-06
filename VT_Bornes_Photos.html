@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>VT Bornes — Photos</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --muted:#94a3b8;
+    --accent:#38bdf8; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,'Segoe UI',Arial,sans-serif}
+  body{padding:env(safe-area-inset-top) env(safe-area-inset-right)
+        calc(96px + env(safe-area-inset-bottom)) env(safe-area-inset-left)}
+  header{position:sticky;top:0;z-index:5;background:#0f172aee;backdrop-filter:blur(6px);
+    padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:17px;letter-spacing:.3px}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);font-size:12px;margin-top:2px}
+  .wrap{padding:14px 16px}
+  .field{margin-bottom:12px}
+  label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.6px;margin-bottom:5px}
+  input[type=text],input[type=date]{width:100%;padding:12px 12px;font-size:16px;
+    background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--txt);outline:none}
+  input:focus{border-color:var(--accent)}
+  .cat{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:14px;margin-bottom:14px}
+  .cat.done{border-color:#166534;background:#0e2a1c}
+  .cat-head{display:flex;align-items:center;gap:10px}
+  .badge{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;
+    justify-content:center;font-size:13px;font-weight:700;background:#334155;color:#cbd5e1}
+  .cat.done .badge{background:var(--ok);color:#04210f}
+  .cat-title{font-size:15px;font-weight:600;flex:1}
+  .count{font-size:12px;color:var(--muted)}
+  .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .thumb{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;
+    border:1px solid var(--line);background:#0b1220}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .rm{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;
+    border:none;background:#0f172acc;color:#fff;font-size:14px;line-height:22px;cursor:pointer}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    padding:13px;margin-top:12px;font-size:15px;font-weight:600;border:none;border-radius:12px;
+    cursor:pointer;background:#0c4a6e;color:#e0f2fe}
+  .btn:active{opacity:.85}
+  .btn.cam{background:#0c4a6e;border:1px solid #0ea5e9}
+  input[type=file]{display:none}
+  .footer{position:fixed;left:0;right:0;bottom:0;z-index:6;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:#0f172af2;backdrop-filter:blur(8px);border-top:1px solid var(--line)}
+  .gen{width:100%;padding:16px;font-size:16px;font-weight:700;border:none;border-radius:14px;
+    background:linear-gradient(135deg,#16a34a,#22c55e);color:#04210f;cursor:pointer}
+  .gen:disabled{background:#334155;color:#64748b;cursor:not-allowed}
+  .gen-sub{text-align:center;color:var(--muted);font-size:11px;margin-top:6px}
+  .note{background:#3b2a06;border:1px solid #78500a;color:#fde68a;border-radius:12px;
+    padding:10px 12px;font-size:12.5px;margin-bottom:14px;line-height:1.4}
+  .row2{display:flex;gap:10px}
+  .row2 .field{flex:1}
+  .newvisit{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:10px;padding:9px;font-size:13px;width:100%;margin-top:4px;cursor:pointer}
+  .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);
+    background:#111827;border:1px solid var(--line);color:#e2e8f0;padding:10px 16px;
+    border-radius:12px;font-size:13px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>Solatech · <span>Visite Technique Bornes</span></h1>
+  <div class="sub">Prise de photos classées — hors-ligne</div>
+</header>
+
+<div class="wrap">
+  <div class="note">📸 Prenez les photos, puis appuyez sur <b>Générer le paquet</b> <b>avant de quitter le site</b>. Les photos restent dans l'appli tant que le paquet n'est pas créé.</div>
+
+  <div class="row2">
+    <div class="field">
+      <label>Client</label>
+      <input type="text" id="client" placeholder="ex. Dupont" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="date">
+    </div>
+  </div>
+
+  <div id="cats"></div>
+
+  <button class="newvisit" id="reset">↺ Nouvelle visite (effacer les photos)</button>
+</div>
+
+<div class="footer">
+  <button class="gen" id="gen" disabled>Générer le paquet (.zip)</button>
+  <div class="gen-sub" id="genSub">Saisissez le client et prenez au moins une photo</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Catégories ────────────────────────────────────────────────────────────────
+const CATS = [
+  {id:'tgbt',  num:'01', label:'TGBT',                    slug:'TGBT',                required:true},
+  {id:'chem',  num:'02', label:'Cheminement du câble',    slug:'Cheminement',         required:true},
+  {id:'empl',  num:'03', label:'Emplacement du chargeur', slug:'Emplacement_chargeur',required:true},
+  {id:'autre', num:'09', label:'Autre',                   slug:'Autre',               required:false},
+];
+const store = {}; CATS.forEach(c => store[c.id] = []); // {blob,url,ext}
+
+// ── Init date du jour ─────────────────────────────────────────────────────────
+(function(){
+  const d = new Date();
+  document.getElementById('date').value =
+    d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+})();
+
+// ── Rendu des cartes catégories ───────────────────────────────────────────────
+const catsEl = document.getElementById('cats');
+function render(){
+  catsEl.innerHTML = '';
+  CATS.forEach(cat=>{
+    const list = store[cat.id];
+    const done = list.length>0;
+    const card = document.createElement('div');
+    card.className = 'cat'+(done?' done':'');
+    card.innerHTML = `
+      <div class="cat-head">
+        <div class="badge">${done?'✓':cat.num}</div>
+        <div class="cat-title">${cat.label}${cat.required?'':' <span class="count">(optionnel)</span>'}</div>
+        <div class="count">${list.length} photo${list.length>1?'s':''}</div>
+      </div>
+      <div class="thumbs" id="th_${cat.id}"></div>
+      <label class="btn cam" for="in_${cat.id}">📷 Prendre une photo</label>
+      <input type="file" id="in_${cat.id}" accept="image/*" capture="environment">
+    `;
+    catsEl.appendChild(card);
+
+    const th = card.querySelector('#th_'+cat.id);
+    list.forEach((p,idx)=>{
+      const d = document.createElement('div'); d.className='thumb';
+      d.innerHTML = `<img src="${p.url}"><button class="rm" title="Supprimer">×</button>`;
+      d.querySelector('.rm').onclick = ()=>{ URL.revokeObjectURL(p.url); list.splice(idx,1); render(); updateGen(); };
+      th.appendChild(d);
+    });
+
+    card.querySelector('#in_'+cat.id).addEventListener('change', e=>{
+      const f = e.target.files && e.target.files[0];
+      if(f){
+        const ext = extOf(f);
+        store[cat.id].push({blob:f, url:URL.createObjectURL(f), ext});
+        render(); updateGen(); toast(cat.label+' ajouté');
+      }
+      e.target.value='';
+    });
+  });
+}
+
+function extOf(file){
+  let n = (file.name||'').toLowerCase();
+  let m = n.match(/\.([a-z0-9]{2,4})$/);
+  if(m) return m[1]==='jpeg'?'jpg':m[1];
+  if(file.type==='image/png') return 'png';
+  if(file.type==='image/heic') return 'heic';
+  return 'jpg';
+}
+
+// ── Etat du bouton générer ────────────────────────────────────────────────────
+function totalPhotos(){ return CATS.reduce((n,c)=>n+store[c.id].length,0); }
+function updateGen(){
+  const client = document.getElementById('client').value.trim();
+  const total = totalPhotos();
+  const gen = document.getElementById('gen');
+  const ok = client.length>0 && total>0;
+  gen.disabled = !ok;
+  const missing = CATS.filter(c=>c.required && store[c.id].length===0).map(c=>c.label);
+  const sub = document.getElementById('genSub');
+  if(!client){ sub.textContent='Saisissez le nom du client'; }
+  else if(total===0){ sub.textContent='Prenez au moins une photo'; }
+  else if(missing.length){ sub.textContent='Manque encore : '+missing.join(', '); }
+  else { sub.textContent = total+' photo'+(total>1?'s':'')+' — prêt à générer'; }
+}
+document.getElementById('client').addEventListener('input', updateGen);
+
+// ── Nom de fichier propre ─────────────────────────────────────────────────────
+function sanitize(s){
+  return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || 'Client';
+}
+
+// ── ZIP (méthode "store", sans compression) — 100% hors-ligne ─────────────────
+const CRC_TABLE = (()=>{ const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = (c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; }
+  return t; })();
+function crc32(bytes){ let c=0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) c = CRC_TABLE[(c^bytes[i])&0xFF] ^ (c>>>8);
+  return (c^0xFFFFFFFF)>>>0; }
+
+const DOSDATE = ((2025-1980)<<9)|(1<<5)|1; // date DOS valide (01/01/2025)
+function zipStore(files){ // files: [{name(str), data(Uint8Array)}]
+  const enc = new TextEncoder();
+  const chunks=[]; const central=[]; let offset=0;
+  const u16=v=>new Uint8Array([v&255,(v>>8)&255]);
+  const u32=v=>new Uint8Array([v&255,(v>>8)&255,(v>>16)&255,(v>>24)&255]);
+  function push(arr){ chunks.push(arr); offset+=arr.length; }
+
+  files.forEach(f=>{
+    const name = enc.encode(f.name);
+    const crc = crc32(f.data);
+    const size = f.data.length;
+    const localOffset = offset;
+    // local file header
+    push(u32(0x04034b50)); push(u16(20)); push(u16(0x0800)); push(u16(0)); // sig,ver,flag(UTF8),method=store
+    push(u16(0)); push(u16(DOSDATE));                                      // time, date (valide)
+    push(u32(crc)); push(u32(size)); push(u32(size));                      // crc,comp,uncomp
+    push(u16(name.length)); push(u16(0));                                  // name len, extra len
+    push(name); push(f.data);
+    // central directory record
+    const c=[];
+    c.push(u32(0x02014b50)); c.push(u16(20)); c.push(u16(20)); c.push(u16(0x0800)); c.push(u16(0));
+    c.push(u16(0)); c.push(u16(DOSDATE));
+    c.push(u32(crc)); c.push(u32(size)); c.push(u32(size));
+    c.push(u16(name.length)); c.push(u16(0)); c.push(u16(0));
+    c.push(u16(0)); c.push(u16(0)); c.push(u32(0));
+    c.push(u32(localOffset)); c.push(name);
+    central.push(c);
+  });
+
+  const cdStart = offset;
+  central.forEach(c=>c.forEach(push));
+  const cdSize = offset - cdStart;
+  // end of central directory
+  push(u32(0x06054b50)); push(u16(0)); push(u16(0));
+  push(u16(files.length)); push(u16(files.length));
+  push(u32(cdSize)); push(u32(cdStart)); push(u16(0));
+
+  let total=0; chunks.forEach(a=>total+=a.length);
+  const out=new Uint8Array(total); let p=0;
+  chunks.forEach(a=>{ out.set(a,p); p+=a.length; });
+  return out;
+}
+
+// ── Génération du paquet ──────────────────────────────────────────────────────
+document.getElementById('gen').addEventListener('click', async ()=>{
+  const client = sanitize(document.getElementById('client').value);
+  const date = document.getElementById('date').value || 'sans-date';
+  const folder = client+'_'+date;
+  const gen = document.getElementById('gen');
+  gen.disabled=true; const old=gen.textContent; gen.textContent='Préparation…';
+  try{
+    const files=[];
+    for(const cat of CATS){
+      const list = store[cat.id];
+      for(let i=0;i<list.length;i++){
+        const buf = new Uint8Array(await list[i].blob.arrayBuffer());
+        const suffix = list.length>1 ? '_'+(i+1) : '';
+        const name = `${folder}/${client}_${date}_${cat.num}_${cat.slug}${suffix}.${list[i].ext}`;
+        files.push({name, data:buf});
+      }
+    }
+    const zip = zipStore(files);
+    const blob = new Blob([zip], {type:'application/zip'});
+    const fname = folder+'.zip';
+    const file = new File([blob], fname, {type:'application/zip'});
+
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:folder, text:'Visite technique '+client});
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=fname;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 30000);
+    }
+    toast('Paquet « '+fname+' » prêt ✓');
+  }catch(err){
+    toast('Erreur : '+(err&&err.message?err.message:err));
+  }finally{
+    gen.textContent=old; updateGen();
+  }
+});
+
+// ── Nouvelle visite ───────────────────────────────────────────────────────────
+document.getElementById('reset').addEventListener('click', ()=>{
+  if(totalPhotos()>0 && !confirm('Effacer toutes les photos de cette visite ?')) return;
+  CATS.forEach(c=>{ store[c.id].forEach(p=>URL.revokeObjectURL(p.url)); store[c.id]=[]; });
+  document.getElementById('client').value='';
+  render(); updateGen(); toast('Nouvelle visite');
+});
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg;
+  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+
+// ── Avertir avant fermeture si photos non exportées ───────────────────────────
+window.addEventListener('beforeunload', e=>{ if(totalPhotos()>0){ e.preventDefault(); e.returnValue=''; }});
+
+render(); updateGen();
+</script>
+</body>
+</html>
